@@ -1,12 +1,11 @@
 #include <Windows.h>
-#include <chrono>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <wchar.h>
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 224
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 448
 #define SPRITE_WIDTH 32
 #define SPRITE_HEIGHT 32
 #define SPRITE_SHEET_WIDTH 320
@@ -27,22 +26,22 @@ struct SpriteID
 string spriteSheet;
 string characterSpriteSheet;
 SpriteID charPositition = {"startPoint", 160, 96};
-string map[640 * 448];
-string spriteMap[20 * 14] = {
-	"I3", "J3", "A4", "I3", "J3", "I3", "J3", "I3", "J3", "I3", //"J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3",
-	"I4", "J4", "A4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", //"J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4",
-	"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", //"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4",
-	"J1", "G4", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	"J1", "G5", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	"J1", "F6", "H3", "F6", "H3", "F6", "H3", "J1", "A4", "J1", //"J1", "H1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	"J1", "F6", "H3", "F6", "H3", "F6", "H3", "J1", "A4", "J1", //"J1", "J1", "J2", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", //"J1", "J1", "J1", "J1", "J1", "J1", "A4", "A4", "A4", "A4",
+string map[SCREEN_WIDTH * SCREEN_HEIGHT];
+string spriteMap[(SCREEN_WIDTH / SPRITE_WIDTH) * (SCREEN_HEIGHT / SPRITE_HEIGHT)] = {
+	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
+	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
+	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
+	"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "J1", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "I3", "J3", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "H1", "A9", "A9", "A9", "H3", "A9", "I4", "J4", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "A9", "I3", "J3", "A9", "A9", "A9", "A9", "J1",
+	"J1", "I3", "J3", "A9", "A9", "I3", "J3", "A9", "A9", "A4", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A9", "J1", "J1",
+	"J1", "I4", "J4", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "J2", "A9", "A9", "J1",
+	"J1", "A9", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1",
+	"J1", "H1", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "J1", "A9", "A9", "A9", "I3", "J3", "J1",
+	"J1", "J1", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "J1", "J1", "A9", "I4", "J4", "J1",
+	"J1", "J1", "J1", "J1", "H1", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
+	"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
 };
 
 SpriteID sprites[(SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT)] = {};
@@ -69,8 +68,8 @@ int main() {
 	_CONSOLE_FONT_INFOEX font = { 0 };
 	font.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	font.nFont;
-	font.dwFontSize.X = 3;
-	font.dwFontSize.Y = 3;
+	font.dwFontSize.X = 2;
+	font.dwFontSize.Y = 2;
 	font.FaceName;
 	font.FontFamily = FF_DONTCARE;
 	font.FontWeight = FW_NORMAL;
@@ -114,7 +113,7 @@ int main() {
 	}
 
 	// Load sprite sheet
-	ifstream file("tileset_32x32_1bit.dat");
+	ifstream file("EditedTileset_32x32_1bit.dat");
 	if (file.is_open())
 	{
 		while (getline(file, temp))
@@ -135,28 +134,17 @@ int main() {
 		}
 	}
 
-	// Color screen white
-	/*for (int i = 0; i < SCREEN_WIDTH; i++) {
-		for (int j = 0; j < SCREEN_HEIGHT; j++) {
-			screen[j * SCREEN_WIDTH + i] = L'\u2588';
-			map[j * SCREEN_WIDTH + i] = 1;
-		}
-	}*/
-	
-	
-	
-
 	// Game loop
 
-	
 	while (true) { 
+		
 		LoadMap();
 		Input();
 		Draw();
 		
 		WriteConsoleOutputCharacter(hConsole, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
-		//Sleep(16);
+
 	}
 	return 0;
 }
@@ -195,7 +183,7 @@ void LoadCharacter(int x1, int y1, string spriteName) {
 	for (int i = 0 + x1; i < (CHARACTER_SPRITE_WIDTH + x1); i++) {
 		for (int j = 0 + y1; j < (CHARACTER_SPRITE_HEIGHT + y1); j++) {
 			if(characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == '1' || characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == '0')
-			spriteMap[j * SCREEN_WIDTH + i] = characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
+			map[j * SCREEN_WIDTH + i] = characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
 		}
 	}
 }
@@ -209,27 +197,25 @@ void LoadMap() {
 }
 
 void Input() {
-
-		
 		if (GetAsyncKeyState(0x53)) {	// S
-			LoadCharacter(charPositition.x, charPositition.y += 2, "A1");
-			LoadCharacter(charPositition.x, charPositition.y += 2, "B1");
-			LoadCharacter(charPositition.x, charPositition.y += 2, "C1");
+			LoadCharacter(charPositition.x, charPositition.y += 10, "A1");
+			//LoadCharacter(charPositition.x, charPositition.y += 2, "B1");
+			//LoadCharacter(charPositition.x, charPositition.y += 2, "C1");
 		}
 		else if (GetAsyncKeyState(0x41)) { // A
-			LoadCharacter(charPositition.x -= 2, charPositition.y, "A2");
-			LoadCharacter(charPositition.x -= 2, charPositition.y, "B2");
-			LoadCharacter(charPositition.x -= 2, charPositition.y, "C2");
+			LoadCharacter(charPositition.x -= 10, charPositition.y, "A2");
+			//LoadCharacter(charPositition.x -= 2, charPositition.y, "B2");
+			//LoadCharacter(charPositition.x -= 2, charPositition.y, "C2");
 		}
 		else if (GetAsyncKeyState(0x44)) {	// D
-			LoadCharacter(charPositition.x += 2, charPositition.y, "A3");
-			LoadCharacter(charPositition.x += 2, charPositition.y, "B3");
-			LoadCharacter(charPositition.x += 2, charPositition.y, "C3");
+			LoadCharacter(charPositition.x += 10, charPositition.y, "A3");
+			//LoadCharacter(charPositition.x += 2, charPositition.y, "B3");
+			//LoadCharacter(charPositition.x += 2, charPositition.y, "C3");
 		}
 		else if (GetAsyncKeyState(0x57)) { // W
-			LoadCharacter(charPositition.x, charPositition.y -= 2, "A4");
-			LoadCharacter(charPositition.x, charPositition.y -= 2, "B4");
-			LoadCharacter(charPositition.x, charPositition.y -= 2, "C4");
+			LoadCharacter(charPositition.x, charPositition.y -= 10, "A4");
+			//LoadCharacter(charPositition.x, charPositition.y -= 2, "A4");
+			//LoadCharacter(charPositition.x, charPositition.y -= 2, "C4");
 		}
 }
 
