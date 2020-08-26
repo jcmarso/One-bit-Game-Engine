@@ -3,15 +3,13 @@
 #include <string>
 #include <fstream>
 #include <wchar.h>
-#include <thread>
-#include <atomic>
 
 #define SCREEN_WIDTH 320	
 #define SCREEN_HEIGHT 224
-#define SPRITE_WIDTH 32
-#define SPRITE_HEIGHT 32
-#define SPRITE_SHEET_WIDTH 320
-#define SPRITE_SHEET_HEIGHT 416
+#define MAP_SPRITE_WIDTH 32
+#define MAP_SPRITE_HEIGHT 32
+#define MAP_SPRITE_SHEET_WIDTH 320
+#define MAP_SPRITE_SHEET_HEIGHT 416
 #define CHARACTER_SPRITE_WIDTH 32
 #define CHARACTER_SPRITE_HEIGHT 48
 #define CHARACTER_SPRITE_SHEET_WIDTH 96
@@ -28,7 +26,7 @@ struct SpriteID
 wstring spriteSheet;
 wstring characterSpriteSheet;
 SpriteID charPositition = {"startPoint", 0, 0};
-string spriteMap[(SCREEN_WIDTH / SPRITE_WIDTH) * (SCREEN_HEIGHT / SPRITE_HEIGHT)] = {
+string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT)] = {
 	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", //"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
 	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", //"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
 	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", //"A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
@@ -45,35 +43,45 @@ string spriteMap[(SCREEN_WIDTH / SPRITE_WIDTH) * (SCREEN_HEIGHT / SPRITE_HEIGHT)
 	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
 };
 
-SpriteID sprites[(SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT)] = {};
+SpriteID sprites[(MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) * (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT)] = {};
 SpriteID characterSprites[(CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH) * (CHARACTER_SPRITE_SHEET_HEIGHT / CHARACTER_SPRITE_HEIGHT)] = {};
 
 
-void LoadSprite(int x1, int y1, string spriteName);
-void LoadCharacter(int x1, int y1, string spriteName);
-void Draw();
+void LoadMapSprite(int x1, int y1, string spriteName);
+void LoadCharacterSprite(int x1, int y1, string spriteName);
+void Update();
 void Input();
+void Draw(bool bufferTag);
 
 wchar_t* screen = new wchar_t[SCREEN_WIDTH * SCREEN_HEIGHT];
 HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+HANDLE buffer1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+HANDLE buffer2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 DWORD dwScreenBufferData = 0;
 
 int main() {
 	
-	SetConsoleActiveScreenBuffer(hConsole);
+	//SetConsoleActiveScreenBuffer(hConsole);
 
 	_COORD coord = { SCREEN_WIDTH, SCREEN_HEIGHT };
+
 	SetConsoleScreenBufferSize(hConsole, coord);
+	SetConsoleScreenBufferSize(buffer1, coord);
+	SetConsoleScreenBufferSize(buffer2, coord);
 
 	_CONSOLE_FONT_INFOEX font = { 0 };
 	font.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	font.nFont;
-	font.dwFontSize.X = 3;
-	font.dwFontSize.Y = 3;
+	font.dwFontSize.X = 2;
+	font.dwFontSize.Y = 2;
 	font.FaceName;
 	font.FontFamily = FF_DONTCARE;
 	font.FontWeight = FW_NORMAL;
+
 	SetCurrentConsoleFontEx(hConsole, false, &font);
+	SetCurrentConsoleFontEx(buffer1, false, &font);
+	SetCurrentConsoleFontEx(buffer2, false, &font);
+
 
 	// Assign codes to sprites
 
@@ -84,9 +92,9 @@ int main() {
 	int y = 0;
 	string spriteID;
 
-	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH); ++i) {
-		for (int j = 0; j < (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT); j++) {
-			sprites[j * (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) + i] = {letter + to_string(number), x * SPRITE_WIDTH, y * SPRITE_HEIGHT };
+	for (int i = 0; i < (MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH); ++i) {
+		for (int j = 0; j < (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT); j++) {
+			sprites[j * (MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) + i] = {letter + to_string(number), x * MAP_SPRITE_WIDTH, y * MAP_SPRITE_HEIGHT };
 				number++;
 				y++;
 		}
@@ -147,21 +155,21 @@ int main() {
 
 	// Game loop
 	
+	bool bufferTag = true; // Boolean to keep track or what buffer is being displayed. true = buffer1, false = buffer2
+
 	while (true) { 
-		Draw();
 		Input();
-			
-		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
-		WriteConsoleOutputCharacter(hConsole, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
+		Update();
+		Draw(bufferTag);
 	}
 	return 0;
 }
 
-void LoadSprite(int x1, int y1, string spriteName) {
+void LoadMapSprite(int x1, int y1, string spriteName) {
 	SpriteID temp;
 	temp = {spriteName, 0, 0};
 
-	for (int i = 0; i < (SCREEN_WIDTH / SPRITE_WIDTH) * (SCREEN_HEIGHT / SPRITE_HEIGHT); i++) {
+	for (int i = 0; i < (SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT); i++) {
 		if (sprites[i].name == temp.name) {
 			temp.x = sprites[i].x;
 			temp.y = sprites[i].y;
@@ -169,14 +177,14 @@ void LoadSprite(int x1, int y1, string spriteName) {
 		}
 	}
 
-	for (int i = 0 + x1; i < (SPRITE_WIDTH + x1); i++) {
-		for (int j = 0 + y1; j < (SPRITE_HEIGHT + y1); j++) {
-			screen[j * SCREEN_WIDTH + i] = spriteSheet[(temp.y + j - y1) * SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
+	for (int i = 0 + x1; i < (MAP_SPRITE_WIDTH + x1); i++) {
+		for (int j = 0 + y1; j < (MAP_SPRITE_HEIGHT + y1); j++) {
+			screen[j * SCREEN_WIDTH + i] = spriteSheet[(temp.y + j - y1) * MAP_SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
 		}
 	}
 }
 
-void LoadCharacter(int x1, int y1, string spriteName) {
+void LoadCharacterSprite(int x1, int y1, string spriteName) {
 	SpriteID temp;
 	temp = { spriteName, 0, 0 };
 
@@ -197,33 +205,51 @@ void LoadCharacter(int x1, int y1, string spriteName) {
 	}
 }
 
-void Draw() {
-	for (int i = 0; i < SCREEN_WIDTH / SPRITE_WIDTH; i++) {
-		for (int j = 0; j < SCREEN_HEIGHT / SPRITE_HEIGHT; j++) {
-			LoadSprite(i * SPRITE_WIDTH, j * SPRITE_HEIGHT, spriteMap[j * (SCREEN_WIDTH / SPRITE_WIDTH) + i]);
+void Update() {
+	for (int i = 0; i < SCREEN_WIDTH / MAP_SPRITE_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT / MAP_SPRITE_HEIGHT; j++) {
+			LoadMapSprite(i * MAP_SPRITE_WIDTH, j * MAP_SPRITE_HEIGHT, spriteMap[j * (SCREEN_WIDTH / MAP_SPRITE_WIDTH) + i]);
 		}
 	}
 }
 
 void Input() {
 		if (GetAsyncKeyState(0x53)) {	// S
-			LoadCharacter(charPositition.x, charPositition.y += 3, "A1");
-			LoadCharacter(charPositition.x, charPositition.y += 3, "B1");
-			LoadCharacter(charPositition.x, charPositition.y += 3, "C1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 3, "A1");
+			//LoadCharacterSprite(charPositition.x, charPositition.y += 3, "B1");
+			//LoadCharacterSprite(charPositition.x, charPositition.y += 3, "C1");
 		}
 		else if (GetAsyncKeyState(0x41)) { // A
-			LoadCharacter(charPositition.x -= 3, charPositition.y, "A2");
-			LoadCharacter(charPositition.x -= 3, charPositition.y, "B2");
-			LoadCharacter(charPositition.x -= 3, charPositition.y, "C2");
+			LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "A2");
+			//LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "B2");
+			//LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "C2");
 		}
 		else if (GetAsyncKeyState(0x44)) {	// D
-			LoadCharacter(charPositition.x += 3, charPositition.y, "A3");
-			LoadCharacter(charPositition.x += 3, charPositition.y, "B3");
-			LoadCharacter(charPositition.x += 3, charPositition.y, "C3");
+			LoadCharacterSprite(charPositition.x += 3, charPositition.y, "A3");
+			//LoadCharacterSprite(charPositition.x += 3, charPositition.y, "B3");
+			//LoadCharacterSprite(charPositition.x += 3, charPositition.y, "C3");
 		}
 		else if (GetAsyncKeyState(0x57)) { // W
-			LoadCharacter(charPositition.x, charPositition.y -= 3, "A4");
-			LoadCharacter(charPositition.x, charPositition.y -= 3, "B4");
-			LoadCharacter(charPositition.x, charPositition.y -= 3, "C4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "A4");
+			//LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "B4");
+			//LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "C4");
 		}
+}
+void Draw(bool bufferTag) {
+	HANDLE tempBuffer;
+
+	if (bufferTag == false) {
+		tempBuffer = buffer1;
+		SetConsoleActiveScreenBuffer(tempBuffer);
+		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
+		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
+		bufferTag = true;
+	}
+	else if (bufferTag == true) {
+		tempBuffer = buffer2;
+		SetConsoleActiveScreenBuffer(tempBuffer);
+		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
+		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
+		bufferTag = false;
+	}
 }
