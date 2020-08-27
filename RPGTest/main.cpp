@@ -1,5 +1,4 @@
 #include <Windows.h>
-#include <iostream>
 #include <string>
 #include <fstream>
 #include <wchar.h>
@@ -17,16 +16,20 @@
 
 using namespace std;
 
-struct SpriteID
+struct SpriteID	// Used for map and character sprites
 {
 	string name;
 	int x = 0, y = 0;
 };
 
-wstring spriteSheet;
-wstring characterSpriteSheet;
-SpriteID charPositition = {"startPoint", 0, 0};
-string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT)] = {
+wstring spriteSheet;	// To store map sprite sheet
+wstring characterSpriteSheet;	// To store character sprite sheet
+SpriteID charPositition = {"startPoint", 0, 0};	// Initial character position
+
+// Full map. Composed of sprites of 32x32 dimension. In this case represented by a code formed by A to J for columns,
+// and 1 to 13 for rows, like "A1", "J2" and so on.
+
+string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT)] = {	
 	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", //"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
 	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", //"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
 	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", //"A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
@@ -45,10 +48,10 @@ string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE
 
 SpriteID sprites[(MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) * (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT)] = {};
 SpriteID characterSprites[(CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH) * (CHARACTER_SPRITE_SHEET_HEIGHT / CHARACTER_SPRITE_HEIGHT)] = {};
+bool bufferTag = true; // Boolean to keep track or what buffer is being displayed. true = buffer1, false = buffer2
 
-
-void LoadMapSprite(int x1, int y1, string spriteName);
-void LoadCharacterSprite(int x1, int y1, string spriteName);
+void LoadMapSprite(int x1, int y1, string spriteName);	// Function to load map sprites to spriteMap
+void LoadCharacterSprite(int x1, int y1, string spriteName);	// Function to load character sprites to spriteMap
 void Update();
 void Input();
 void Draw(bool bufferTag);
@@ -61,7 +64,7 @@ DWORD dwScreenBufferData = 0;
 
 int main() {
 	
-	//SetConsoleActiveScreenBuffer(hConsole);
+	SetConsoleActiveScreenBuffer(hConsole);
 
 	_COORD coord = { SCREEN_WIDTH, SCREEN_HEIGHT };
 
@@ -81,7 +84,7 @@ int main() {
 	SetCurrentConsoleFontEx(hConsole, false, &font);
 	SetCurrentConsoleFontEx(buffer1, false, &font);
 	SetCurrentConsoleFontEx(buffer2, false, &font);
-
+	SetConsoleActiveScreenBuffer(hConsole);
 
 	// Assign codes to sprites
 
@@ -155,12 +158,9 @@ int main() {
 
 	// Game loop
 	
-	bool bufferTag = true; // Boolean to keep track or what buffer is being displayed. true = buffer1, false = buffer2
-
+	Update();
 	while (true) { 
 		Input();
-		Update();
-		Draw(bufferTag);
 	}
 	return 0;
 }
@@ -215,24 +215,62 @@ void Update() {
 
 void Input() {
 		if (GetAsyncKeyState(0x53)) {	// S
-			LoadCharacterSprite(charPositition.x, charPositition.y += 3, "A1");
-			//LoadCharacterSprite(charPositition.x, charPositition.y += 3, "B1");
-			//LoadCharacterSprite(charPositition.x, charPositition.y += 3, "C1");
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "A1");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "C1");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
+			Draw(bufferTag);
 		}
 		else if (GetAsyncKeyState(0x41)) { // A
-			LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "A2");
-			//LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "B2");
-			//LoadCharacterSprite(charPositition.x -= 3, charPositition.y, "C2");
+			Update();
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "A2");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "C2");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
+			Draw(bufferTag);
+	
 		}
 		else if (GetAsyncKeyState(0x44)) {	// D
-			LoadCharacterSprite(charPositition.x += 3, charPositition.y, "A3");
-			//LoadCharacterSprite(charPositition.x += 3, charPositition.y, "B3");
-			//LoadCharacterSprite(charPositition.x += 3, charPositition.y, "C3");
+			Update();
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "A3");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "C3");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
+			Draw(bufferTag);
+	
 		}
 		else if (GetAsyncKeyState(0x57)) { // W
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "A4");
-			//LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "B4");
-			//LoadCharacterSprite(charPositition.x, charPositition.y -= 3, "C4");
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "A4");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "C4");
+			Draw(bufferTag);
+			Update();
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
+			Draw(bufferTag);
 		}
 }
 void Draw(bool bufferTag) {
