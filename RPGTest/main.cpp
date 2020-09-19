@@ -1,10 +1,11 @@
 #include <Windows.h>
+#include <chrono>
 #include <string>
 #include <fstream>
 #include <wchar.h>
 
-#define SCREEN_WIDTH 320	
-#define SCREEN_HEIGHT 224
+#define SCREEN_WIDTH 640	
+#define SCREEN_HEIGHT 448
 #define MAP_SPRITE_WIDTH 32
 #define MAP_SPRITE_HEIGHT 32
 #define MAP_SPRITE_SHEET_WIDTH 320
@@ -30,20 +31,20 @@ SpriteID charPositition = {"startPoint", 0, 0};	// Initial character position
 // and 1 to 13 for rows, like "A1", "J2" and so on.
 
 string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT)] = {	
-	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", //"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
-	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", //"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
-	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", //"A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
-	"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", //"A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "J1", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "A4", //"A9", "A9", "A9", "A9", "A9", "A9", "A9", "I3", "J3", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", //"A9", "H1", "A9", "A9", "A9", "H3", "A9", "I4", "J4", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", //"A9", "A9", "A9", "I3", "J3", "A9", "A9", "A9", "A9", "J1",
-	//"J1", "I3", "J3", "A9", "A9", "I3", "J3", "A9", "A9", "A4", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A9", "J1", "J1",
-	//"J1", "I4", "J4", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "J2", "A9", "A9", "J1",
-	//"J1", "A9", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1",
-	//"J1", "H1", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "J1", "A9", "A9", "A9", "I3", "J3", "J1",
-	//"J1", "J1", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "J1", "J1", "A9", "I4", "J4", "J1",
-	//"J1", "J1", "J1", "J1", "H1", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
-	//"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
+	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
+	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
+	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
+	"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "J1", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "I3", "J3", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "H1", "A9", "A9", "A9", "H3", "A9", "I4", "J4", "J1",
+	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "A9", "I3", "J3", "A9", "A9", "A9", "A9", "J1",
+	"J1", "I3", "J3", "A9", "A9", "I3", "J3", "A9", "A9", "A4", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A9", "J1", "J1",
+	"J1", "I4", "J4", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "J2", "A9", "A9", "J1",
+	"J1", "A9", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1",
+	"J1", "H1", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "J1", "A9", "A9", "A9", "I3", "J3", "J1",
+	"J1", "J1", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "J1", "J1", "A9", "I4", "J4", "J1",
+	"J1", "J1", "J1", "J1", "H1", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
+	"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
 };
 
 SpriteID sprites[(MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) * (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT)] = {};
@@ -61,9 +62,14 @@ HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NUL
 HANDLE buffer1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 HANDLE buffer2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 DWORD dwScreenBufferData = 0;
+wstring appName;
+wchar_t s[256];
 
 int main() {
 	
+	auto tp1 = std::chrono::system_clock::now();
+	auto tp2 = std::chrono::system_clock::now();
+
 	SetConsoleActiveScreenBuffer(hConsole);
 
 	_COORD coord = { SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -161,6 +167,13 @@ int main() {
 	Update();
 	while (true) { 
 		Input();
+		tp2 = std::chrono::system_clock::now();
+		std::chrono::duration<float> elapsedTime = tp2 - tp1;
+		tp1 = tp2;
+		float fElapsedTime = elapsedTime.count();
+
+		swprintf_s(s, 256, L"OnBiGamE - %s - FPS: %3.2f", appName.c_str(), 1.0f / fElapsedTime);
+		SetConsoleTitle(s);
 	}
 	return 0;
 }
