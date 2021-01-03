@@ -1,36 +1,35 @@
 #include <Windows.h>
-#include <chrono>
 #include <string>
 #include <fstream>
-#include <wchar.h>
 
-#define SCREEN_WIDTH 640	
+#define SCREEN_WIDTH 640			
 #define SCREEN_HEIGHT 448
-#define MAP_SPRITE_WIDTH 32
-#define MAP_SPRITE_HEIGHT 32
-#define MAP_SPRITE_SHEET_WIDTH 320
-#define MAP_SPRITE_SHEET_HEIGHT 416
-#define CHARACTER_SPRITE_WIDTH 32
-#define CHARACTER_SPRITE_HEIGHT 48
-#define CHARACTER_SPRITE_SHEET_WIDTH 96
-#define CHARACTER_SPRITE_SHEET_HEIGHT 192
+#define TILE_WIDTH 32
+#define TILE_HEIGHT 32
+#define TILE_MAP_WIDTH 320
+#define TILE_MAP_HEIGHT 416
+#define SPRITE_WIDTH 32
+#define SPRITE_HEIGHT 48
+#define SPRITE_SHEET_WIDTH 96
+#define SPRITE_SHEET_HEIGHT 192
 
 using namespace std;
 
-struct SpriteID	// Used for map and character sprites
+struct AssetID	// Used for map tiles and character sprites IDs
 {
 	string name;
 	int x = 0, y = 0;
 };
 
-wstring spriteSheet;	// To store map sprite sheet
+wstring tileSheet;	// To store tile sheet
 wstring characterSpriteSheet;	// To store character sprite sheet
-SpriteID charPositition = {"startPoint", 0, 0};	// Initial character position
+AssetID charPositition = {"startPoint", 0, 0};	// Initial character position
 
-// Full map. Composed of sprites of 32x32 dimension. In this case represented by a code formed by A to J for columns,
+
+// Full map. Composed of tiles of 32x32 dimension. In this case represented by a code formed by A to J for columns,
 // and 1 to 13 for rows, like "A1", "J2" and so on.
 
-string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT)] = {	
+string tileMap[(SCREEN_WIDTH / TILE_WIDTH) * (SCREEN_HEIGHT / TILE_HEIGHT)] = {	
 	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
 	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
 	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
@@ -47,29 +46,28 @@ string spriteMap[(SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE
 	"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
 };
 
-SpriteID sprites[(MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) * (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT)] = {};
-SpriteID characterSprites[(CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH) * (CHARACTER_SPRITE_SHEET_HEIGHT / CHARACTER_SPRITE_HEIGHT)] = {};
+AssetID tiles[(TILE_MAP_WIDTH / TILE_WIDTH) * (TILE_MAP_HEIGHT / TILE_HEIGHT)] = {}; // Total number of tiles on tileSheet
+AssetID characterSprites[(SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT)] = {}; // Total number of sprites of characterSpriteSheet
 bool bufferTag = true; // Boolean to keep track or what buffer is being displayed. true = buffer1, false = buffer2
 
-void LoadMapSprite(int x1, int y1, string spriteName);	// Function to load map sprites to spriteMap
-void LoadCharacterSprite(int x1, int y1, string spriteName);	// Function to load character sprites to spriteMap
+void LoadMapSprite(int x1, int y1, string spriteName);	// Function to load map tiles to screen character array
+void LoadCharacterSprite(int x1, int y1, string spriteName);	// Function to load character sprites to screen character array
 void Update();
 void Input();
 void Draw(bool bufferTag);
 
-wchar_t* screen = new wchar_t[SCREEN_WIDTH * SCREEN_HEIGHT];
+wchar_t* screen = new wchar_t[SCREEN_WIDTH * SCREEN_HEIGHT]; // Pointer to character array to be written to console.
 HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 HANDLE buffer1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 HANDLE buffer2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 DWORD dwScreenBufferData = 0;
 wstring appName;
-wchar_t s[256];
+int prevSprite = 0;
+char keyInput = ' ';
 
 int main() {
-	
-	auto tp1 = std::chrono::system_clock::now();
-	auto tp2 = std::chrono::system_clock::now();
-
+	wstring title(L"One Bit Game Engine");
+	SetConsoleTitle(title.c_str());
 	SetConsoleActiveScreenBuffer(hConsole);
 
 	_COORD coord = { SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -92,18 +90,18 @@ int main() {
 	SetCurrentConsoleFontEx(buffer2, false, &font);
 	SetConsoleActiveScreenBuffer(hConsole);
 
-	// Assign codes to sprites
+	// Assign codes to tiles
 
 	string temp;
 	char letter = 'A';
 	int number = 1;
 	int x = 0;
 	int y = 0;
-	string spriteID;
+	string AssetID;
 
-	for (int i = 0; i < (MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH); ++i) {
-		for (int j = 0; j < (MAP_SPRITE_SHEET_HEIGHT / MAP_SPRITE_HEIGHT); j++) {
-			sprites[j * (MAP_SPRITE_SHEET_WIDTH / MAP_SPRITE_WIDTH) + i] = {letter + to_string(number), x * MAP_SPRITE_WIDTH, y * MAP_SPRITE_HEIGHT };
+	for (int i = 0; i < (TILE_MAP_WIDTH / TILE_WIDTH); ++i) {
+		for (int j = 0; j < (TILE_MAP_HEIGHT / TILE_HEIGHT); j++) {
+			tiles[j * (TILE_MAP_WIDTH / TILE_WIDTH) + i] = {letter + to_string(number), x * TILE_WIDTH, y * TILE_HEIGHT };
 				number++;
 				y++;
 		}
@@ -112,16 +110,16 @@ int main() {
 		y = 0;
 		number = 1;
 	}
-	//Assign code to character sprites
+	//Assign codes to character sprites
 	// Reset values
 	letter = 'A';
 	number = 1;
 	x = 0;
 	y = 0;
 	
-	for (int i = 0; i < (CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH); ++i) {
-		for (int j = 0; j < (CHARACTER_SPRITE_SHEET_HEIGHT / CHARACTER_SPRITE_HEIGHT); j++) {
-			characterSprites[j * (CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH) + i] = { letter + to_string(number), x * CHARACTER_SPRITE_WIDTH, y * CHARACTER_SPRITE_HEIGHT };
+	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH); ++i) {
+		for (int j = 0; j < (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT); j++) {
+			characterSprites[j * (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) + i] = { letter + to_string(number), x * SPRITE_WIDTH, y * SPRITE_HEIGHT };
 			number++;
 			y++;
 		}
@@ -130,7 +128,7 @@ int main() {
 		y = 0;
 		number = 1;
 	}
-	// Load map sprite sheet
+	// Load map tile sheet to tileSheet variable
 	ifstream file("EditedTileset_32x32_1bit.dat");
 	if (file.is_open())
 	{
@@ -138,14 +136,14 @@ int main() {
 		{
 			for (int i = 0; i < temp.size(); i++) {
 				if (temp[i] == '1')
-					spriteSheet += L'\u2588';
+					tileSheet += L'\u2588';
 				else if (temp[i] == '0')
-					spriteSheet += L' ';
+					tileSheet += L' ';
 			}
 		}
 	}
 
-	// Load character sprite sheet
+	// Load character sprite sheet to characterSpriteSheet variable
 	ifstream file2("character.dat");
 	if (file2.is_open())
 	{
@@ -161,47 +159,39 @@ int main() {
 			}
 		}
 	}
+	Update();
+	WriteConsoleOutputCharacter(hConsole, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 
 	// Game loop
-	
-	Update();
 	while (true) { 
 		Input();
-		tp2 = std::chrono::system_clock::now();
-		std::chrono::duration<float> elapsedTime = tp2 - tp1;
-		tp1 = tp2;
-		float fElapsedTime = elapsedTime.count();
-
-		swprintf_s(s, 256, L"OnBiGamE - %s - FPS: %3.2f", appName.c_str(), 1.0f / fElapsedTime);
-		SetConsoleTitle(s);
+		Draw(bufferTag);
 	}
 	return 0;
 }
 
 void LoadMapSprite(int x1, int y1, string spriteName) {
-	SpriteID temp;
-	temp = {spriteName, 0, 0};
+	AssetID temp = {spriteName, 0, 0};
 
-	for (int i = 0; i < (SCREEN_WIDTH / MAP_SPRITE_WIDTH) * (SCREEN_HEIGHT / MAP_SPRITE_HEIGHT); i++) {
-		if (sprites[i].name == temp.name) {
-			temp.x = sprites[i].x;
-			temp.y = sprites[i].y;
+	for (int i = 0; i < (SCREEN_WIDTH / TILE_WIDTH) * (SCREEN_HEIGHT / TILE_HEIGHT); i++) {
+		if (tiles[i].name == temp.name) {
+			temp.x = tiles[i].x;
+			temp.y = tiles[i].y;
 			break;
 		}
 	}
 
-	for (int i = 0 + x1; i < (MAP_SPRITE_WIDTH + x1); i++) {
-		for (int j = 0 + y1; j < (MAP_SPRITE_HEIGHT + y1); j++) {
-			screen[j * SCREEN_WIDTH + i] = spriteSheet[(temp.y + j - y1) * MAP_SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
+	for (int i = 0 + x1; i < (TILE_WIDTH + x1); i++) {
+		for (int j = 0 + y1; j < (TILE_HEIGHT + y1); j++) {
+			screen[j * SCREEN_WIDTH + i] = tileSheet[(temp.y + j - y1) * TILE_MAP_WIDTH + (temp.x + i - x1)];
 		}
 	}
 }
 
 void LoadCharacterSprite(int x1, int y1, string spriteName) {
-	SpriteID temp;
-	temp = { spriteName, 0, 0 };
+	AssetID temp = { spriteName, 0, 0 };
 
-	for (int i = 0; i < (CHARACTER_SPRITE_SHEET_WIDTH / CHARACTER_SPRITE_WIDTH) * (CHARACTER_SPRITE_SHEET_HEIGHT / CHARACTER_SPRITE_HEIGHT); i++) {
+	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT); i++) {
 		if (characterSprites[i].name == temp.name) {
 			temp.x = characterSprites[i].x;
 			temp.y = characterSprites[i].y;
@@ -209,82 +199,115 @@ void LoadCharacterSprite(int x1, int y1, string spriteName) {
 		}
 	}
 
-	for (int i = 0 + x1; i < (CHARACTER_SPRITE_WIDTH + x1); i++) {
-		for (int j = 0 + y1; j < (CHARACTER_SPRITE_HEIGHT + y1); j++) {
-			if (characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == L'\u2588' || characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == L' ') {
-				screen[j * SCREEN_WIDTH + i] = characterSpriteSheet[(temp.y + j - y1) * CHARACTER_SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
+	for (int i = 0 + x1; i < (SPRITE_WIDTH + x1); i++) {
+		for (int j = 0 + y1; j < (SPRITE_HEIGHT + y1); j++) {
+			if (characterSpriteSheet[(temp.y + j - y1) * SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == L'\u2588' || characterSpriteSheet[(temp.y + j - y1) * SPRITE_SHEET_WIDTH + (temp.x + i - x1)] == L' ') {
+				screen[j * SCREEN_WIDTH + i] = characterSpriteSheet[(temp.y + j - y1) * SPRITE_SHEET_WIDTH + (temp.x + i - x1)];
 			}
 		}
 	}
 }
 
 void Update() {
-	for (int i = 0; i < SCREEN_WIDTH / MAP_SPRITE_WIDTH; i++) {
-		for (int j = 0; j < SCREEN_HEIGHT / MAP_SPRITE_HEIGHT; j++) {
-			LoadMapSprite(i * MAP_SPRITE_WIDTH, j * MAP_SPRITE_HEIGHT, spriteMap[j * (SCREEN_WIDTH / MAP_SPRITE_WIDTH) + i]);
+	for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT / TILE_HEIGHT; j++) {
+			LoadMapSprite(i * TILE_WIDTH, j * TILE_HEIGHT, tileMap[j * (SCREEN_WIDTH / TILE_WIDTH) + i]);
 		}
 	}
 }
 
 void Input() {
-		if (GetAsyncKeyState(0x53)) {	// S
-			Update();
+	Update();
+	if (GetAsyncKeyState(0x53)) {	// S
+		keyInput =  'S';
+
+		if (prevSprite == 0)
 			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "A1");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 1)
 			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 2)
 			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "C1");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 3)
 			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
-			Draw(bufferTag);
-		}
-		else if (GetAsyncKeyState(0x41)) { // A
-			Update();
+
+		if (prevSprite < 3)
+			prevSprite += 1;
+		else
+			prevSprite = 0;
+	}
+	else if (GetAsyncKeyState(0x41)) { // A
+		keyInput = 'A';
+		if (prevSprite == 0)
 			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "A2");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 1)
 			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 2)
 			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "C2");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 3)
 			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
-			Draw(bufferTag);
-	
-		}
-		else if (GetAsyncKeyState(0x44)) {	// D
-			Update();
+
+		if (prevSprite < 3)
+			prevSprite += 1;
+		else
+			prevSprite = 0;
+	}
+	else if (GetAsyncKeyState(0x44)) {	// D
+		keyInput = 'D';
+
+		if (prevSprite == 0)
 			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "A3");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 1)
 			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 2)
 			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "C3");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 3)
 			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
-			Draw(bufferTag);
-	
-		}
-		else if (GetAsyncKeyState(0x57)) { // W
-			Update();
+
+		if (prevSprite < 3)
+			prevSprite += 1;
+		else
+			prevSprite = 0;
+
+	}
+	else if (GetAsyncKeyState(0x57)) { // W
+		keyInput = 'W';
+
+		if (prevSprite == 0)
 			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "A4");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 1)
 			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 2)
 			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "C4");
-			Draw(bufferTag);
-			Update();
+
+		else if (prevSprite == 3)
 			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
-			Draw(bufferTag);
-		}
+
+		if (prevSprite < 3)
+			prevSprite += 1;
+		else
+			prevSprite = 0;
+	}
+	else if(!GetAsyncKeyState(0x53) || !GetAsyncKeyState(0x41) || !GetAsyncKeyState(0x44) || !GetAsyncKeyState(0x57)) {
+		if(keyInput == 'S')
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B1");
+		else if (keyInput == 'A')
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B2");
+		else if (keyInput == 'D')
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B3");
+		else if (keyInput == 'W')
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B4");
+	}
 }
 void Draw(bool bufferTag) {
 	HANDLE tempBuffer;
@@ -292,14 +315,12 @@ void Draw(bool bufferTag) {
 	if (bufferTag == false) {
 		tempBuffer = buffer1;
 		SetConsoleActiveScreenBuffer(tempBuffer);
-		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
 		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 		bufferTag = true;
 	}
 	else if (bufferTag == true) {
 		tempBuffer = buffer2;
 		SetConsoleActiveScreenBuffer(tempBuffer);
-		screen[SCREEN_WIDTH * SCREEN_HEIGHT - 1] = '\0';
 		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 		bufferTag = false;
 	}
