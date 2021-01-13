@@ -3,7 +3,7 @@
 #include <fstream>
 #include <chrono>
 
-#define SCREEN_WIDTH 320			
+#define SCREEN_WIDTH 352			
 #define SCREEN_HEIGHT 224
 #define TILE_WIDTH 32
 #define TILE_HEIGHT 32
@@ -24,7 +24,7 @@ struct AssetID	// Used for map tiles and character sprites IDs
 
 wstring tileSheet;	// To store tile sheet
 wstring characterSpriteSheet;	// To store character sprite sheet
-AssetID charPositition = {"startPoint", 0, 0};	// Initial character position
+AssetID charPositition = {"startPoint", 160, 80};	// Initial character position
 
 
 // Full map. Composed of tiles of 32x32 dimension. In this case represented by a code formed by A to J for columns,
@@ -64,17 +64,19 @@ DWORD dwScreenBufferData = 0;
 int prevSprite = 0;
 char keyInput = ' ';
 char prevKeyInput = ' ';
+auto fpsTime1 = chrono::system_clock::now();
+auto fpsTime2 = chrono::system_clock::now();
+auto animationTime1 = chrono::system_clock::now();
+auto animationTime2 = chrono::system_clock::now();
+wstring appName = L"One Bit Game Engine";
+wchar_t s[256];
 
 int main() {
-	auto time1 = std::chrono::system_clock::now();
-	auto time2 = std::chrono::system_clock::now();
-	wstring appName = L"One Bit Game Engine";
-	wchar_t s[256];
+	
 	SetConsoleActiveScreenBuffer(buffer1);
 
 	_COORD coord = { SCREEN_WIDTH, SCREEN_HEIGHT };
 
-	SetConsoleScreenBufferSize(buffer1, coord);
 	SetConsoleScreenBufferSize(buffer1, coord);
 	SetConsoleScreenBufferSize(buffer2, coord);
 
@@ -161,22 +163,10 @@ int main() {
 			}
 		}
 	}
-	Update();
-	WriteConsoleOutputCharacter(buffer1, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
-
 	// Game loop
 	while (true) { 
 		Input();
 		Draw(bufferTag);
-
-		time2 = std::chrono::system_clock::now();
-		std::chrono::duration<float> passedTime = time2 - time1;
-		time1 = time2;
-		float elapsedTime = passedTime.count();
-
-		swprintf_s(s, 256, L"%s - FPS: %3.2f", appName.c_str(), 1.0f / elapsedTime);
-		SetConsoleTitle(s);
-
 	}
 	return 0;
 }
@@ -229,20 +219,25 @@ void Update() {
 
 void Input() {
 	Update();
+	
+	animationTime2 = chrono::system_clock::now();
+	chrono::duration<float> passedTime = animationTime2 - animationTime1;
+	animationTime1 = animationTime2;
+	float elapsedTime = passedTime.count();
+	
 	if (GetAsyncKeyState(0x53)) {	// S
 		keyInput =  'S';
-
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "A1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "A1");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "C1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "C1");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -253,16 +248,16 @@ void Input() {
 	else if (GetAsyncKeyState(0x41)) { // A
 		keyInput = 'A';
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "A2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "A2");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "C2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "C2");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -274,16 +269,16 @@ void Input() {
 		keyInput = 'D';
 
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "A3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "A3");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "C3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "C3");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -296,16 +291,16 @@ void Input() {
 		keyInput = 'W';
 
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "A4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "A4");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "C4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "C4");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -326,6 +321,13 @@ void Input() {
 }
 void Draw(bool bufferTag) {
 	HANDLE tempBuffer;
+	fpsTime2 = chrono::system_clock::now();
+	chrono::duration<float> passedTime = fpsTime2 - fpsTime1;
+	fpsTime1 = fpsTime2;
+	float elapsedTime = passedTime.count();
+
+	swprintf_s(s, 256, L"%s - FPS: %3.2f", appName.c_str(), 1.0f / elapsedTime);
+	SetConsoleTitle(s);
 
 	if (bufferTag == false) {
 		tempBuffer = buffer1;
@@ -339,4 +341,5 @@ void Draw(bool bufferTag) {
 		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 		bufferTag = false;
 	}
+	Sleep(25); // To cap FPS to 20 approximately and keep animation at normal speed.
 }
