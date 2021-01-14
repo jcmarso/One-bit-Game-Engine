@@ -13,6 +13,8 @@
 #define SPRITE_HEIGHT 48
 #define SPRITE_SHEET_WIDTH 96
 #define SPRITE_SHEET_HEIGHT 192
+#define MAP_WIDTH 1104
+#define MAP_HEIGHT 648
 
 using namespace std;
 
@@ -22,9 +24,16 @@ struct AssetID	// Used for map tiles and character sprites IDs
 	int x = 0, y = 0;
 };
 
+struct Camera	// Camera Initial position
+{
+	int x = 0, y = 0;
+};
+
 wstring tileSheet;	// To store tile sheet
 wstring characterSpriteSheet;	// To store character sprite sheet
-AssetID charPositition = {"startPoint", 160, 80};	// Initial character position
+wstring fullMap; // To store full map
+AssetID charPositition = {"startPoint", 288, 64};	// Initial character position
+Camera camera = { 0, 0 };
 
 
 // Full map. Composed of tiles of 32x32 dimension. In this case represented by a code formed by A to J for columns,
@@ -83,8 +92,8 @@ int main() {
 	_CONSOLE_FONT_INFOEX font = { 0 };
 	font.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	font.nFont;
-	font.dwFontSize.X = 4;
-	font.dwFontSize.Y = 4;
+	font.dwFontSize.X = 2;
+	font.dwFontSize.Y = 2;
 	font.FaceName;
 	font.FontFamily = FF_DONTCARE;
 	font.FontWeight = FW_NORMAL;
@@ -163,6 +172,21 @@ int main() {
 			}
 		}
 	}
+
+	ifstream file3("oneBitMap.dat");
+	if (file3.is_open())
+	{
+		while (getline(file3, temp))
+		{
+			for (int i = 0; i < temp.size(); i++) {
+				if (temp[i] == '0')
+					fullMap += L'\u2588';
+				else if (temp[i] == '1')
+					fullMap += L' ';
+			}
+		}
+	}
+
 	// Game loop
 	while (true) { 
 		Input();
@@ -210,11 +234,18 @@ void LoadCharacterSprite(int x1, int y1, string spriteName) {
 }
 
 void Update() {
-	for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
+	for (int i = 0; i < SCREEN_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT; j++) {
+			screen[j * SCREEN_WIDTH + i] = fullMap[(j + camera.y)  * MAP_WIDTH + i + camera.x];
+		}
+	}
+
+
+	/*for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
 		for (int j = 0; j < SCREEN_HEIGHT / TILE_HEIGHT; j++) {
 			LoadMapTile(i * TILE_WIDTH, j * TILE_HEIGHT, tileMap[j * (SCREEN_WIDTH / TILE_WIDTH) + i]);
 		}
-	}
+	}*/
 }
 
 void Input() {
@@ -227,17 +258,18 @@ void Input() {
 	
 	if (GetAsyncKeyState(0x53)) {	// S
 		keyInput =  'S';
+		camera.y += 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "A1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "A1");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "C1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "C1");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 4, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -247,17 +279,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x41)) { // A
 		keyInput = 'A';
+		camera.x -= 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "A2");
+			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "A2");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "C2");
+			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "C2");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -267,18 +300,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x44)) {	// D
 		keyInput = 'D';
-
+		camera.x += 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "A3");
+			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "A3");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "C3");
+			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "C3");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x += 4, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -289,18 +322,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x57)) { // W
 		keyInput = 'W';
-
+		camera.y -= 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "A4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "A4");
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "C4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "C4");
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
