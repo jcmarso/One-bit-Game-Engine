@@ -3,8 +3,8 @@
 #include <fstream>
 #include <chrono>
 
-#define SCREEN_WIDTH 352			
-#define SCREEN_HEIGHT 224
+#define SCREEN_WIDTH 512			
+#define SCREEN_HEIGHT 288
 #define TILE_WIDTH 32
 #define TILE_HEIGHT 32
 #define TILE_MAP_WIDTH 320
@@ -20,8 +20,7 @@ using namespace std;
 
 struct AssetID	// Used for map tiles and character sprites IDs
 {
-	string name;
-	int x = 0, y = 0;
+	int id = 0, x = 0, y = 0;
 };
 
 struct Camera	// Camera Initial position
@@ -31,37 +30,48 @@ struct Camera	// Camera Initial position
 
 wstring tileSheet;	// To store tile sheet
 wstring characterSpriteSheet;	// To store character sprite sheet
-wstring fullMap; // To store full map
-AssetID charPositition = {"startPoint", 288, 64};	// Initial character position
-Camera camera = { 0, 0 };
+//wstring fullMap; // To store full maps
+AssetID charPositition = {0, 288, 64};	// Initial character position
+//Camera camera = { 0, 0 };
 
+// Full map. Composed of tiles of 32x32 dimension.
 
-// Full map. Composed of tiles of 32x32 dimension. In this case represented by a code formed by A to J for columns,
-// and 1 to 13 for rows, like "A1", "J2" and so on.
-
-string tileMap[280/*(SCREEN_WIDTH / TILE_WIDTH) * (SCREEN_HEIGHT / TILE_HEIGHT)*/] = {	
-	"I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3", "I3", "J3",
-	"I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4", "I4", "J4",
-	"H2", "A9", "G3", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1", "J1",
-	"A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A4", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "J1", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "H1", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "I3", "J3", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "H1", "A9", "A9", "A9", "H3", "A9", "I4", "J4", "J1",
-	"J1", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "A9", "I3", "J3", "A9", "A9", "A9", "A9", "J1",
-	"J1", "I3", "J3", "A9", "A9", "I3", "J3", "A9", "A9", "A4", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A9", "J1", "J1",
-	"J1", "I4", "J4", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "J2", "A9", "A9", "J1",
-	"J1", "A9", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "A9", "J1",
-	"J1", "H1", "A9", "A9", "A9", "I5", "J5", "A9", "A9", "A4", "A9", "A9", "A9", "J1", "A9", "A9", "A9", "I3", "J3", "J1",
-	"J1", "J1", "A9", "A9", "A9", "I4", "J4", "A9", "A9", "A4", "A9", "A9", "A9", "A9", "J1", "J1", "A9", "I4", "J4", "J1",
-	"J1", "J1", "J1", "J1", "H1", "A9", "A9", "A9", "A9", "A4", "A9", "A9", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
-	"J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "A4", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1", "J1",
+string map = {
+2,2, 2, 2, 2, 2, 2, 2, 2, 62,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 62,2,
+2,81,81,29,30,81,81,81,27,81,81,81,29,30,81,81,81,81,81,81,81,81,81,81,81,81,81,29,30,81,81,8, 29,30,81,81,81,81,81,81,81,29,30,27,81,2,
+2,29,30,39,40,81,81,29,30,81,81,81,39,40,81,81,81,81,81,81,81,81,81,81,81,29,30,39,40,81,81,81,39,40,81,10,81,81,81,81,81,39,40,81,81,2,
+2,39,40,81,81,29,30,39,40,81,81,81,29,30,81,81,81,29,30,81,81,81,81,81,81,39,40,81,81,81,81,81,81,10,29,30,81,81,81,81,81,81,81,81,81,2,
+2,81,81,81,81,39,40,81,81,81,81,81,39,40,81,81,81,39,40,81,81,81,81,29,30,29,30,9, 81,81,81,81,81,10,39,40,81,81,81,81,29,30,81,81,20,2,
+2,81,81,81,81,81,81,81,81,81,81,81,81,81,29,30,19,81,81,81,81,81,81,39,40,39,40,81,81,81,81,81,81,81,10,10,81,29,30,81,39,40,10,29,30,2,
+2,81,81,81,81,81,81,81,81,81,81,81,81,81,39,40,81,81,81,81,81,81,81,81,81,9, 29,30,81,81,81,81,81,81,81,81,81,39,40,29,30,10,10,39,40,2,
+2,29,30,81,29,30,81,81,81,81,81,81,81,81,81,29,30,81,81,81,81,81,81,81,81,81,39,40,81,81,81,81,81,81,81,81,29,30,10,49,50,10,10,10,81,2,
+2,39,40,81,39,40,81,81,81,81,29,30,81,81,81,39,40,81,81,81,81,81,81,81,81,81,81,29,30,81,81,81,81,81,81,81,39,40,10,39,40,81,81,27,81,2,
+2,81,81,81,81,19,81,81,29,30,39,40,81,81,81,81,29,30,81,81,81,81,81,81,81,81,81,39,40,10,29,30,81,81,81,81,81,29,30,10,10,38,81,81,81,2,
+2,81,81,81,29,30,81,81,39,40,8, 29,30,81,81,81,39,40,81,81,81,81,29,30,81,81,81,81,29,30,39,40,29,30,81,81,81,39,40,10,10,38,81,81,81,2,
+2,29,30,81,39,40,81,81,81,81,81,39,40,29,30,81,81,81,81,81,81,81,39,40,81,81,81,81,39,40,29,30,39,40,81,81,81,81,10,29,30,38,38,81,81,2,
+2,39,40,29,30,81,81,29,30,81,81,81,8, 39,40,81,81,81,81,81,81,81,81,81,81,81,10,29,30,10,39,40,29,30,81,81,81,81,10,39,40,38,81,81,81,2,
+2,81,81,39,40,81,81,39,40,81,81,81,81,29,30,81,81,81,81,81,81,81,27,81,81,10,10,39,40,10,10,81,39,40,81,8, 81,29,30,9, 29,30,81,81,81,2,
+2,29,30,81,81,10,81,29,30,81,81,81,81,39,40,29,30,81,81,81,81,81,81,81,81,10,29,30,10,81,81,81,81,81,81,81,10,39,40,81,39,40,81,81,81,2,
+2,39,40,81,29,30,81,39,40,81,81,81,81,81,81,39,40,29,30,81,81,81,81,81,29,30,39,40,29,30,81,81,81,81,81,29,30,10,81,81,81,81,81,81,81,2,
+2,81,29,30,39,40,81,81,81,81,81,81,81,81,81,81,81,39,40,10,29,30,29,30,39,40,81,81,39,40,81,81,81,81,81,39,40,81,81,81,81,81,81,81,81,2,
+2,81,39,40,81,81,29,30,81,81,81,81,81,81,81,81,29,30,8, 19,39,40,39,40,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,29,30,2,
+2,81,81,81,29,30,39,40,29,30,81,81,81,81,81,8, 39,40,29,30,19,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,29,30,39,40,2,
+2,81,29,30,39,40,81,81,39,40,81,81,81,81,29,30,81,81,39,40,81,81,81,81,81,29,30,81,81,81,81,81,81,8, 29,30,81,81,81,27,81,39,40,81,81,2,
+2,81,39,40,81,81,81,81,10,29,30,81,29,30,39,40,81,81,81,81,81,81,81,81,81,39,40,81,81,81,81,81,81,81,39,40,81,81,81,81,81,81,81,81,81,2,
+2,29,30,29,30,27,81,81,81,49,50,81,39,40,8, 29,30,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,81,20,81,81,81,81,81,81,28,56,28,2,
+2,39,40,39,40,81,81,81,81,49,50,81,81,81,81,39,40,81,29,30,81,8, 81,81,81,81,81,81,81,81,37,81,81,81,8, 8, 81,81,81,29,30,81,81,81,81,2,
+2,81,29,30,81,81,81,81,81,39,40,81,81,81,29,30,81,81,49,50,29,30,81,81,81,81,81,81,81,81,47,81,81,8, 81,81,81,81,81,49,50,81,28,56,28,2,
+2,20,39,40,81,29,30,81,81,81,81,81,81,81,39,40,81,81,49,50,39,40,81,81,8, 8, 81,81,81,81,81,81,8, 81,81,81,81,81,81,49,50,81,81,81,81,2,
+2,29,30,10,10,39,40,81,81,81,81,81,81,81,81,81,81,81,39,40,81,81,81,8, 8, 81,81,81,81,81,81,81,20,81,81,81,81,81,81,39,40,81,28,56,28,2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2 
 };
 
 AssetID tiles[(TILE_MAP_WIDTH / TILE_WIDTH) * (TILE_MAP_HEIGHT / TILE_HEIGHT)] = {}; // Total number of tiles on tileSheet
 AssetID characterSprites[(SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT)] = {}; // Total number of sprites of characterSpriteSheet
 bool bufferTag = true; // Boolean to keep track or what buffer is being displayed. true = buffer1, false = buffer2
 
-void LoadMapTile(int x1, int y1, string tileName);	// Function to load map tiles to screen character array
-void LoadCharacterSprite(int x1, int y1, string spriteName);	// Function to load character sprites to screen character array
+void LoadMapTile(int x1, int y1, int tileID);	// Function to load map tiles to screen character array
+void LoadCharacterSprite(int x1, int y1, int spriteID);	// Function to load character sprites to screen character array
 void Update();
 void Input();
 void Draw(bool bufferTag);
@@ -75,8 +85,6 @@ char keyInput = ' ';
 char prevKeyInput = ' ';
 auto fpsTime1 = chrono::system_clock::now();
 auto fpsTime2 = chrono::system_clock::now();
-auto animationTime1 = chrono::system_clock::now();
-auto animationTime2 = chrono::system_clock::now();
 wstring appName = L"One Bit Game Engine";
 wchar_t s[256];
 
@@ -105,41 +113,35 @@ int main() {
 	// Assign codes to tiles
 
 	string temp;
-	char letter = 'A';
-	int number = 1;
+	int id = 1;
 	int x = 0;
 	int y = 0;
-	string AssetID;
 
-	for (int i = 0; i < (TILE_MAP_WIDTH / TILE_WIDTH); ++i) {
+	for (int i = 0; i < (TILE_MAP_WIDTH / TILE_WIDTH); i++) {
 		for (int j = 0; j < (TILE_MAP_HEIGHT / TILE_HEIGHT); j++) {
-			tiles[j * (TILE_MAP_WIDTH / TILE_WIDTH) + i] = {letter + to_string(number), x * TILE_WIDTH, y * TILE_HEIGHT };
-				number++;
-				y++;
+			id = (j * 10) + i + 1;
+			tiles[j * (TILE_MAP_WIDTH / TILE_WIDTH) + i] = {id, x * TILE_WIDTH, y * TILE_HEIGHT };
+			y++;
 		}
-		letter++;
 		x++;
 		y = 0;
-		number = 1;
 	}
 	//Assign codes to character sprites
 	// Reset values
-	letter = 'A';
 
-	number = 1;
+	id = 1;
 	x = 0;
 	y = 0;
 	
-	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH); ++i) {
+	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH); i++) {
 		for (int j = 0; j < (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT); j++) {
-			characterSprites[j * (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) + i] = { letter + to_string(number), x * SPRITE_WIDTH, y * SPRITE_HEIGHT };
-			number++;
+			id = (j * 3) + i + 1;
+			characterSprites[j * (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) + i] = { id, x * SPRITE_WIDTH, y * SPRITE_HEIGHT };
+			id = (i * j) + j;
 			y++;
 		}
-		letter++;
 		x++;
 		y = 0;
-		number = 1;
 	}
 	// Load map tile sheet to tileSheet variable
 	ifstream file("EditedTileset_32x32_1bit.dat");
@@ -173,20 +175,6 @@ int main() {
 		}
 	}
 
-	ifstream file3("oneBitMap.dat");
-	if (file3.is_open())
-	{
-		while (getline(file3, temp))
-		{
-			for (int i = 0; i < temp.size(); i++) {
-				if (temp[i] == '0')
-					fullMap += L'\u2588';
-				else if (temp[i] == '1')
-					fullMap += L' ';
-			}
-		}
-	}
-
 	// Game loop
 	while (true) { 
 		Input();
@@ -195,11 +183,11 @@ int main() {
 	return 0;
 }
 
-void LoadMapTile(int x1, int y1, string tileName) {
-	AssetID temp = {tileName, 0, 0};
+void LoadMapTile(int x1, int y1, int tileId) {
+	AssetID temp = {tileId, 0, 0};
 
 	for (int i = 0; i < (SCREEN_WIDTH / TILE_WIDTH) * (SCREEN_HEIGHT / TILE_HEIGHT); i++) {
-		if (tiles[i].name == temp.name) {
+		if (tiles[i].id == temp.id) {
 			temp.x = tiles[i].x;
 			temp.y = tiles[i].y;
 			break;
@@ -213,11 +201,11 @@ void LoadMapTile(int x1, int y1, string tileName) {
 	}
 }
 
-void LoadCharacterSprite(int x1, int y1, string spriteName) {
-	AssetID temp = { spriteName, 0, 0 };
+void LoadCharacterSprite(int x1, int y1, int spriteId) {
+	AssetID temp = {spriteId, 0, 0 };
 
 	for (int i = 0; i < (SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT); i++) {
-		if (characterSprites[i].name == temp.name) {
+		if (characterSprites[i].id == temp.id) {
 			temp.x = characterSprites[i].x;
 			temp.y = characterSprites[i].y;
 			break;
@@ -234,42 +222,37 @@ void LoadCharacterSprite(int x1, int y1, string spriteName) {
 }
 
 void Update() {
-	for (int i = 0; i < SCREEN_WIDTH; i++) {
+	/*for (int i = 0; i < SCREEN_WIDTH; i++) {
 		for (int j = 0; j < SCREEN_HEIGHT; j++) {
 			screen[j * SCREEN_WIDTH + i] = fullMap[(j + camera.y)  * MAP_WIDTH + i + camera.x];
 		}
-	}
-
-
-	/*for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
-		for (int j = 0; j < SCREEN_HEIGHT / TILE_HEIGHT; j++) {
-			LoadMapTile(i * TILE_WIDTH, j * TILE_HEIGHT, tileMap[j * (SCREEN_WIDTH / TILE_WIDTH) + i]);
-		}
 	}*/
+
+
+	for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT / TILE_HEIGHT; j++) {
+			LoadMapTile(i * TILE_WIDTH, j * TILE_HEIGHT, map[j * (SCREEN_WIDTH / TILE_WIDTH) + i]);
+		}
+	}
 }
 
 void Input() {
 	Update();
 	
-	animationTime2 = chrono::system_clock::now();
-	chrono::duration<float> passedTime = animationTime2 - animationTime1;
-	animationTime1 = animationTime2;
-	float elapsedTime = passedTime.count();
-	
 	if (GetAsyncKeyState(0x53)) {	// S
 		keyInput =  'S';
-		camera.y += 4;
+		//camera.y += 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "A1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, 1);
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, 2);
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "C1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, 3);
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y += 2, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 4, 2);
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -279,18 +262,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x41)) { // A
 		keyInput = 'A';
-		camera.x -= 4;
+		//camera.x -= 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "A2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, 4);
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, 5);
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "C2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, 6);
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x -= 2, charPositition.y, "B2");
+			LoadCharacterSprite(charPositition.x -= 4, charPositition.y, 5);
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -300,18 +283,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x44)) {	// D
 		keyInput = 'D';
-		camera.x += 4;
+		//camera.x += 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "A3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, 7);
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, 8);
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "C3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, 9);
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x += 2, charPositition.y, "B3");
+			LoadCharacterSprite(charPositition.x += 4, charPositition.y, 8);
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -322,18 +305,18 @@ void Input() {
 	}
 	else if (GetAsyncKeyState(0x57)) { // W
 		keyInput = 'W';
-		camera.y -= 4;
+		//camera.y -= 4;
 		if (prevSprite == 0)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "A4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, 10);
 
 		else if (prevSprite == 1)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, 11);
 
 		else if (prevSprite == 2)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "C4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, 12);
 
 		else if (prevSprite == 3)
-			LoadCharacterSprite(charPositition.x, charPositition.y -= 2, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y -= 4, 11);
 
 		prevKeyInput = keyInput;
 		if (prevSprite < 3)
@@ -343,13 +326,13 @@ void Input() {
 	}
 	else if(!GetAsyncKeyState(0x53) || !GetAsyncKeyState(0x41) || !GetAsyncKeyState(0x44) || !GetAsyncKeyState(0x57)) {
 		if(prevKeyInput == 'S')
-			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B1");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, 2);
 		else if (prevKeyInput == 'A')
-			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B2");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, 5);
 		else if (prevKeyInput == 'D')
-			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B3");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, 8);
 		else if (prevKeyInput == 'W')
-			LoadCharacterSprite(charPositition.x, charPositition.y += 0, "B4");
+			LoadCharacterSprite(charPositition.x, charPositition.y += 0, 11);
 	}
 }
 void Draw(bool bufferTag) {
