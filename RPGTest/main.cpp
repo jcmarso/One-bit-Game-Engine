@@ -143,7 +143,7 @@ int main() {
 	}
 
 	// Load Map
-	ifstream file3("map46x27.txt");
+	ifstream file3("map46x27.dat");
 	if (file3.is_open())
 	{
 		while (getline(file3, temp))
