@@ -28,10 +28,13 @@ struct AssetID	// Used for map tiles and character sprites IDs
 wstring tileSheet;	// To store tile sheet
 wstring characterSpriteSheet;	// To store character sprite sheet
 vector<int> map; // To store full map. Composed of 46x27 tiles of 32x32 pixels
-int playerPositionX = 288;	// Initial player position x
-int playerPositionY = 32;	// Initial player position y
-int cameraPositionX = 0;
-int cameraPositionY = 0;
+int playerPositionX = 96;	// Initial player position x
+int playerPositionY = 0;	// Initial player position y
+int cameraPositionX = 0;	// Initial camera position x
+int cameraPositionY = 0;	// Initial camera position y
+
+int visibleTilesX = SCREEN_WIDTH / TILE_WIDTH;
+int visibleTilesY = SCREEN_HEIGHT / TILE_HEIGHT;
 
 AssetID tiles[(TILE_MAP_WIDTH / TILE_WIDTH) * (TILE_MAP_HEIGHT / TILE_HEIGHT)] = {}; // Total number of tiles on tileSheet
 AssetID characterSprites[(SPRITE_SHEET_WIDTH / SPRITE_WIDTH) * (SPRITE_SHEET_HEIGHT / SPRITE_HEIGHT)] = {}; // Total number of sprites of characterSpriteSheet
@@ -155,7 +158,6 @@ int main() {
 			}
 		}
 	}
-
 	// Game loop
 	while (true) { 
 		Input();
@@ -192,20 +194,23 @@ void LoadCharacterSprite(int x1, int y1, int spriteId) {
 			break;
 		}
 	}
-
 	for (int i = 0 + x1; i < (SPRITE_WIDTH + x1); i++) {
 		for (int j = 0 + y1; j < (SPRITE_HEIGHT + y1); j++) {
 			if (characterSpriteSheet[(temp.y + static_cast<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>::size_type>(j) - y1) * SPRITE_SHEET_WIDTH + (temp.x + static_cast<unsigned long long>(i) - x1)] == L'\u2588' || characterSpriteSheet[(temp.y + static_cast<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>::size_type>(j) - y1) * SPRITE_SHEET_WIDTH + (temp.x + static_cast<unsigned long long>(i) - x1)] == L' ') {
-				screen[j * SCREEN_WIDTH + i] = characterSpriteSheet[(temp.y + static_cast<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>::size_type>(j) - y1) * SPRITE_SHEET_WIDTH + (temp.x + static_cast<unsigned long long>(i) - x1)];
+				screen[(j - (int)cameraPositionY) * SCREEN_WIDTH + (i - (int)cameraPositionX)] = characterSpriteSheet[(temp.y + static_cast<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>::size_type>(j) - y1) * SPRITE_SHEET_WIDTH + (temp.x + static_cast<unsigned long long>(i) - x1)];
 			}
 		}
 	}
 }
 
 void Update() {
+
+	cameraPositionX = playerPositionX / 16;
+	cameraPositionY = playerPositionY / 14;
+	
 	for (int i = 0; i < SCREEN_WIDTH / TILE_WIDTH; i++) {
 		for (int j = 0; j < SCREEN_HEIGHT / TILE_HEIGHT; j++) {
-			LoadMapTile(i * TILE_WIDTH, j * TILE_HEIGHT, map.at(static_cast<std::vector<int, std::allocator<int>>::size_type>(j) * MAP_WIDTH + i));
+			LoadMapTile(i * TILE_WIDTH, j * TILE_HEIGHT, map.at((static_cast<std::vector<int, std::allocator<int>>::size_type>(j) + cameraPositionY) * MAP_WIDTH + (static_cast<unsigned long long>(i) + cameraPositionX)));
 		}
 	}
 }
@@ -214,41 +219,42 @@ void Input() {
 	if (GetAsyncKeyState(0x53)) {	// S
 		keyInput =  'S';
 		if (playerPositionY < SCREEN_HEIGHT - SPRITE_HEIGHT) {
+			playerPositionY += 5;
 			Update();
 			if (prevSprite == 0)
-				LoadCharacterSprite(playerPositionX, playerPositionY += 4, 1);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 1);
 
 			else if (prevSprite == 1)
-				LoadCharacterSprite(playerPositionX, playerPositionY += 4, 2);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 2);
 
 			else if (prevSprite == 2)
-				LoadCharacterSprite(playerPositionX, playerPositionY += 4, 3);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 3);
 
 			else if (prevSprite == 3)
-				LoadCharacterSprite(playerPositionX, playerPositionY += 4, 2);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 2);
 		}
 			prevKeyInput = keyInput;
 			if (prevSprite < 3)
 				prevSprite += 1;
 			else
 				prevSprite = 0;
-
 	}
 	else if (GetAsyncKeyState(0x41)) { // A
 		keyInput = 'A';
 		if (playerPositionX > 0) {
+				playerPositionX -= 5;
 			Update();
 			if (prevSprite == 0)
-				LoadCharacterSprite(playerPositionX -= 4, playerPositionY, 4);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 4);
 
 			else if (prevSprite == 1)
-				LoadCharacterSprite(playerPositionX -= 4, playerPositionY, 5);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 5);
 
 			else if (prevSprite == 2)
-				LoadCharacterSprite(playerPositionX -= 4, playerPositionY, 6);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 6);
 
 			else if (prevSprite == 3)
-				LoadCharacterSprite(playerPositionX -= 4, playerPositionY, 5);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 5);
 		}
 			prevKeyInput = keyInput;
 			if (prevSprite < 3)
@@ -259,18 +265,19 @@ void Input() {
 	else if (GetAsyncKeyState(0x44)) {	// D
 		keyInput = 'D';
 		if (playerPositionX < SCREEN_WIDTH - SPRITE_WIDTH) {
+				playerPositionX += 5;
 			Update();
 			if (prevSprite == 0)
-				LoadCharacterSprite(playerPositionX += 4, playerPositionY, 7);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 7);
 
 			else if (prevSprite == 1)
-				LoadCharacterSprite(playerPositionX += 4, playerPositionY, 8);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 8);
 
 			else if (prevSprite == 2)
-				LoadCharacterSprite(playerPositionX += 4, playerPositionY, 9);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 9);
 
 			else if (prevSprite == 3)
-				LoadCharacterSprite(playerPositionX += 4, playerPositionY, 8);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 8);
 		}
 			prevKeyInput = keyInput;
 			if (prevSprite < 3)
@@ -282,18 +289,20 @@ void Input() {
 	else if (GetAsyncKeyState(0x57)) { // W
 		keyInput = 'W';
 		if (playerPositionY > 0) {
+				playerPositionY -= 5;
+			playerPositionY -= 1;
 			Update();
 			if (prevSprite == 0)
-				LoadCharacterSprite(playerPositionX, playerPositionY -= 4, 10);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 10);
 
 			else if (prevSprite == 1)
-				LoadCharacterSprite(playerPositionX, playerPositionY -= 4, 11);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 11);
 
 			else if (prevSprite == 2)
-				LoadCharacterSprite(playerPositionX, playerPositionY -= 4, 12);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 12);
 
 			else if (prevSprite == 3)
-				LoadCharacterSprite(playerPositionX, playerPositionY -= 4, 11);
+				LoadCharacterSprite(playerPositionX, playerPositionY, 11);
 		}
 			prevKeyInput = keyInput;
 			if (prevSprite < 3)
@@ -335,5 +344,5 @@ void Draw(bool bufferTag) {
 		WriteConsoleOutputCharacter(tempBuffer, screen, SCREEN_WIDTH * SCREEN_HEIGHT, { 0,0 }, &dwScreenBufferData);
 		bufferTag = false;
 	}
-	//Sleep(25); // To cap FPS to 20 approximately and keep animation at normal speed.
+	Sleep(25); // To cap FPS to 20 approximately and keep animation at normal speed.
 }
